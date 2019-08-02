@@ -1,0 +1,55 @@
+extends layout
+
+block content
+  h1= title
+  div(class="row")
+    div(class="col s12")
+      ul(class="messages")
+      form
+        div(class="col s10")
+          input(type="text" autofocus)
+        div(class="col s2")
+          button(class="btn waves-effect waves-light") Enviar mensaje
+block javascript
+  script.
+    const socket = io.connect('http://localhost:3000');
+    const form = document.querySelector('form')
+    const input = document.querySelector('input')
+    const username = prompt("Ingresa un nombre de usuario:")
+    const messages = document.querySelector('.messages')
+
+    form.addEventListener("submit", function(event) {
+      event.preventDefault();
+
+      addMessage(username + ": " + input.value);
+
+      socket.emit("newMessage", {
+        message: input.value
+      });
+      input.value = "";
+      return false;
+    }, false);
+
+    // Socket setup
+
+    socket.on("newMessage", function(data){
+      addMessage(data.username + ": " + data.message);
+    });
+
+    socket.on("newUser", function(data){
+      addMessage(data + " ingreso al chat." );
+    });
+
+    socket.on("userLeft", function(data){
+      addMessage(data + " abandono el chat. ");
+    });
+
+    addMessage('Bienvenido ' + username);
+    socket.emit("newUser", username);
+
+    function addMessage(message) {
+        const li = document.createElement("li");
+        li.innerHTML = message;
+        messages.appendChild(li);
+        window.scrollTo(0, document.body.scrollHeight);
+    }
